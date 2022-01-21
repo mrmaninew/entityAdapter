@@ -5,20 +5,18 @@ import {
   fetchComments,
   patchComment,
   commentsSelectors,
-  likesSelectors,
+  // likesSelectors,
   deleteComment,
   updateOneComment,
   removeLikes,
   removeTagById,
-} from "../store/commentsSplice";
+} from "../../store/commentsSplice";
 import classes from "./Comments.module.css";
 
 const Comments = () => {
   const dispatch = useDispatch();
   const allComments = useSelector(commentsSelectors.selectAll);
-  const allLikes = useSelector(likesSelectors.selectAll);
-
-  console.log(allLikes);
+  // const allLikes = useSelector(likesSelectors.selectAll);
 
   const onDelete = useCallback(
     (id) => {

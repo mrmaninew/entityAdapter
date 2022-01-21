@@ -9,13 +9,30 @@ export const fetchComments = createAsyncThunk(
   "comments/fetchComments",
   async () => {
     return await api.get("/comments?_limit=10").then((result) => {
-      const tags = result.data
+      const mappedData = result.data.map((comment) => ({
+        ...comment,
+        tags: comment.tags.map((tag) => ({ ...tag, commentId: comment.id })),
+        likes: comment.likes.map((like) => ({
+          ...like,
+          commentId: comment.id,
+        })),
+      }));
+
+      const tags = mappedData
         .reduce((prev, curr) => [...prev, curr.tags], [])
         .flat();
-      const likes = result.data
+
+      const likes = mappedData
         .reduce((prev, curr) => [...prev, curr.likes], [])
         .flat();
-      const comments = result.data.map(({ id, body }) => ({ id, body }));
+
+      const comments = mappedData.map(({ id, body, likes, tags }) => ({
+        id,
+        body,
+        likesIds: likes.map((like) => like.id),
+        tagsIds: tags.map((tag) => tag.id),
+      }));
+
       return { comments, tags, likes };
     });
   }
@@ -66,6 +83,20 @@ const commentsSlice = createSlice({
       likesAdapter.removeAll(state.likes, {});
     },
     removeTagById(state, { payload: tagId }) {
+      const { commentId } = tagsAdapter
+        .getSelectors()
+        .selectById(state.tags, tagId);
+      const comment = commentsAdapter
+        .getSelectors()
+        .selectById(state, commentId);
+
+      commentsAdapter.updateOne(state, {
+        id: comment.id,
+        changes: {
+          ...comment,
+          tagsIds: comment.tagsIds.filter((id) => id !== tagId),
+        },
+      });
       tagsAdapter.removeOne(state.tags, tagId);
     },
   },
